@@ -16,3 +16,6 @@ _*NOTE: updates every 5 hours_
 * `GOOGLE_APPLICATION_CREDENTIALS` Path to Credential File
 
 `go run ipupdate.go`
+
+#### Easiest way to run:
+[Docker Image](https://hub.docker.com/r/logankimmel/ipupdate/)
