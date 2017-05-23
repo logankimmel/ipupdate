@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	dns "google.golang.org/api/dns/v1"
@@ -52,16 +53,15 @@ func dnsClientAuth() *dns.Service {
 func getCurrentSet(service *dns.Service) *dns.ResourceRecordSet {
 	var currentSet *dns.ResourceRecordSet
 	rrs := dns.NewResourceRecordSetsService(service)
-	rrslc := rrs.List("lkimmel-1069", "lkimmel")
+	rrslc := rrs.List(os.Getenv("PROJECT_ID"), os.Getenv("ZONE"))
 	response, err := rrslc.Do()
 	if err != nil {
 		log.Fatal("Error getting ManagedZone")
 	}
 	sets := response.Rrsets
 	for _, set := range sets {
-		if set.Name == "home.lkimmel.com." {
+		if set.Name == os.Getenv("ADDR") {
 			currentSet = set
-			// set = set.Rrdatas[0]
 		}
 	}
 	return currentSet
@@ -79,14 +79,14 @@ func updateIP(service *dns.Service, currentSet *dns.ResourceRecordSet, actualIP 
 	newSet := &dns.ResourceRecordSet{}
 	newSet.Kind = "dns#resourceRecordSet"
 	newSet.Rrdatas = []string{actualIP}
-	newSet.Name = "home.lkimmel.com."
+	newSet.Name = os.Getenv("ADDr")
 	newSet.Ttl = 300
 	newSet.Type = "A"
 
 	change.Deletions = []*dns.ResourceRecordSet{currentSet}
 	change.Additions = []*dns.ResourceRecordSet{newSet}
 
-	changeCreateCall := changesService.Create("lkimmel-1069", "lkimmel", change)
+	changeCreateCall := changesService.Create(os.Getenv("PROJECT_ID"), os.Getenv("ZONE"), change)
 	ch, err := changeCreateCall.Do()
 	if err != nil {
 		log.Println("Error creating change")
@@ -96,8 +96,6 @@ func updateIP(service *dns.Service, currentSet *dns.ResourceRecordSet, actualIP 
 }
 
 func ipUpdate() {
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "lkimmel-f071bfdb867f.json")
-
 	ip := getIP()
 	log.Println("Actual home: " + ip)
 	service := dnsClientAuth()
@@ -118,6 +116,31 @@ func doEvery(d time.Duration, f func()) {
 	}
 }
 
+func checkConfig() {
+	for _, envVar := range []string{"PROJECT_ID", "ZONE", "ADDR"} {
+		val := os.Getenv(envVar)
+		if val == "" {
+			log.Fatal("Environment variable " + envVar + " needs to be set")
+		}
+	}
+	//Address needs to end with '.'
+	addr := os.Getenv("ADDR")
+	if !strings.HasSuffix(".", addr) {
+		addr = addr + "."
+	}
+	os.Setenv("ADDR", addr)
+
+	//Check for the Google Credential file (default docker location is /data/creds.json)
+	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/data/googlecreds.json")
+	}
+	_, err := os.Stat(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+	if err != nil {
+		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS file missing (defauls to /data/googlecreds.json)")
+	}
+}
+
 func main() {
+	checkConfig()
 	doEvery(5*time.Hour, ipUpdate)
 }
