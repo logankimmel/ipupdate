@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	dns "google.golang.org/api/dns/v1"
 
@@ -94,7 +95,7 @@ func updateIP(service *dns.Service, currentSet *dns.ResourceRecordSet, actualIP 
 	log.Println(ch)
 }
 
-func main() {
+func ipUpdate() {
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "lkimmel-f071bfdb867f.json")
 
 	ip := getIP()
@@ -107,4 +108,16 @@ func main() {
 	} else {
 		log.Println("Current home IP address is correct")
 	}
+}
+
+func doEvery(d time.Duration, f func()) {
+	f()
+	for x := range time.Tick(d) {
+		log.Println(x)
+		f()
+	}
+}
+
+func main() {
+	doEvery(5*time.Hour, ipUpdate)
 }
