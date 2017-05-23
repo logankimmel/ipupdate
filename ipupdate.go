@@ -79,7 +79,7 @@ func updateIP(service *dns.Service, currentSet *dns.ResourceRecordSet, actualIP 
 	newSet := &dns.ResourceRecordSet{}
 	newSet.Kind = "dns#resourceRecordSet"
 	newSet.Rrdatas = []string{actualIP}
-	newSet.Name = os.Getenv("ADDr")
+	newSet.Name = os.Getenv("ADDR")
 	newSet.Ttl = 300
 	newSet.Type = "A"
 
@@ -130,7 +130,7 @@ func checkConfig() {
 	}
 	os.Setenv("ADDR", addr)
 
-	//Check for the Google Credential file (default docker location is /data/creds.json)
+	//Check for the Google Credential file (default docker location is /data/googlecreds.json)
 	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/data/googlecreds.json")
 	}
