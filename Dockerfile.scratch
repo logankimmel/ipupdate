@@ -1,4 +1,0 @@
-FROM scratch
-ADD ipupdate /
-ADD ca-certificates.crt /etc/ssl/certs/
-CMD ["/ipupdate"]
