@@ -4,18 +4,22 @@ whatever external IP this container/program runs at.
 
 _*NOTE: updates every 5 hours_
 
-### Requirements:
-* [Google Application Credential File](https://developers.google.com/identity/protocols/application-default-credentials)
-* Go 1.7
+## Requirements:
+* Docker 17.05
 
-### Usage:
-#### Environment variables needed:
-* `ADDR` DNS Name
-* `ZONE` DNS Zone Name
-* `PROJECT_ID` Google Project ID
-* `GOOGLE_APPLICATION_CREDENTIALS` Path to Credential File
+## Usage:
+#### Command arguments:
+* Environment Variables
+  * `ADDR` DNS Name
+  * `ZONE` DNS Zone Name
+  * `PROJECT_ID` Google Project ID
+* Volume mount:
+  * [Google Application Credential File](https://developers.google.com/identity/protocols/application-default-credentials)
+    * $CREDS_PATH:/data/googlecreds.json
 
-`go run ipupdate.go`
-
-#### Easiest way to run:
-[Docker Image](https://hub.docker.com/r/logankimmel/ipupdate/)
+### Run command:
+```
+docker run -d -v $CREDS_PATH:/data/googlecreds.json \
+    -e "ADDR=" -e "ZONE=" -e "PROJECT_ID=" \
+    logankimmel/ipupdate
+```
