@@ -21,10 +21,11 @@ type (
 	}
 )
 
-func getIP() string {
+func getIP() (string, bool) {
 	resp, getErr := http.Get("https://api.ipify.org?format=json")
 	if getErr != nil {
-		log.Fatal(getErr)
+		log.Println(getErr)
+		return "", true
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -32,7 +33,7 @@ func getIP() string {
 	if err := json.Unmarshal(body, &d); err != nil {
 		log.Println("Error unmarshalling data from ipify")
 	}
-	return d.IP
+	return d.IP, false
 }
 
 func dnsClientAuth() *dns.Service {
@@ -96,7 +97,11 @@ func updateIP(service *dns.Service, currentSet *dns.ResourceRecordSet, actualIP 
 }
 
 func ipUpdate() {
-	ip := getIP()
+	ip, err := getIP()
+	if err {
+		log.Println("Unable to get current external address, will retry in 5 hours")
+		return
+	}
 	log.Println("Actual home: " + ip)
 	service := dnsClientAuth()
 	currentHome := getCurrentHome(service)
